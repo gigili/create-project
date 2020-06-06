@@ -59,6 +59,8 @@ You can pass all or none of the arguments as they all have predefined default va
 
 I created this script in hopes of improving my knowledge of shell scripting and to help me with the boring repetitive task I had to do when starting a new project.
 
+The script is under active development, and I will be making some changes to it as I think of new stuff to add or learn something new. 
+
 If you have any suggestions, feedback or improvements leave a comment or create a pr on GitHub. 
 
 You can find the whole source for the script @ [Github](https://github.com/gigili/create-project) released under GPL-3.0 licence
