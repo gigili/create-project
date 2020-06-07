@@ -313,5 +313,3 @@ if ask_for_confirmation; then
 else
 	abort
 fi
-
-echo "writing"
