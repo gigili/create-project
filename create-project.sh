@@ -27,7 +27,6 @@ slugify() {
 MYSQL_USER="root"
 MYSQL_PASSWORD="toor"
 VIRTUAL_HOST_PATH="/etc/httpd/conf/extra/sites-enabled"
-RESTART_SERVICE="systemctl restart httpd"
 
 PROJECT_NAME="$1"                          # first argument passed to the script is the name of the project
 SL_PROJECT_NAME=$(slugify "$PROJECT_NAME") # url friendly version of the project name
@@ -38,12 +37,6 @@ CODE_EDITOR="phpstorm" # change the default value to your preference
 PROJECT_LANG=""
 USE_SILENT=false
 VHOST_URL=""
-
-# Check to make sure the project name is not empty
-if [[ -z "$PROJECT_NAME" ]]; then
-	log "Project name can't be empty" "error"
-	abort
-fi
 
 setup_flags() {
 	while [[ $# -gt 0 ]]; do
@@ -201,6 +194,8 @@ setup_language_specific_config() {
 		PROJECT_LANG="php"
 	fi
 
+	cd "$PROJECT_PATH" || return
+
 	case "$PROJECT_LANG" in
 	php)
 		if [[ -z $(type -p "composer") ]]; then
@@ -208,7 +203,7 @@ setup_language_specific_config() {
 			return
 		fi
 
-		composer init "$PROJECT_PATH" --name="$PROJECT_NAME" --type="project" --homepage="$VHOST_URL" --repository="$GIT_REPO"
+		composer init --name "$USER/$SL_PROJECT_NAME" --type "project" --homepage "$VHOST_URL" -q
 		;;
 	node)
 		if [[ -z $(type -p "node") ]]; then
@@ -233,6 +228,7 @@ open_editor() {
 	fi
 
 	log "Running $CODE_EDITOR $PROJECT_PATH" "info"
+
 	"$CODE_EDITOR" "$PROJECT_PATH" >/dev/null 2>&1
 
 }
@@ -256,8 +252,8 @@ setup_virtual_host() {
 	VH_FILE="<VirtualHost *:80>
 		ServerAdmin admin@example.com
 		DocumentRoot \"$PROJECT_PATH\"
-		ServerName \"$VHOST_URL\"
-		ServerAlias \"www.$VHOST_URL\"
+		ServerName $VHOST_URL
+		ServerAlias www.$VHOST_URL
 		ErrorLog \"$PROJECT_PATH/logs/error.log\"
 		CustomLog \"$PROJECT_PATH/logs/access.log\" common
 		<Directory \"$PROJECT_PATH\">
@@ -265,21 +261,27 @@ setup_virtual_host() {
 		</Directory>
 	</VirtualHost>"
 
-	if [[ -d "$VIRTUAL_HOST_PATH" ]]; then
+	if [[ ! -d "$VIRTUAL_HOST_PATH" ]]; then
 		log "Invalid path to the virtual hosts config folder." "error"
 		return
 	fi
 
-	if [[ $(echo "$VH_FILE" | sudo tee -a "$VIRTUAL_HOST_PATH/$SL_PROJECT_NAME.conf") ]]; then
+	if [[ $(echo "$VH_FILE" | sudo tee "$VIRTUAL_HOST_PATH/$SL_PROJECT_NAME.conf") ]]; then
 		log "Virtual host for $PROJECT_NAME created successfully" "success"
 
-		if [[ $(echo "127.0.0.1 $VHOST_URL" | sudo tee -a "/etc/hosts") ]] && [[ $(echo "127.0.0.1 www.$VHOST_URL" | sudo tee -a "/etc/hosts") ]]; then
+		if [[ $(printf "\n127.0.0.1 %s" $VHOST_URL | sudo tee -a "/etc/hosts") ]] &&
+			[[ $(printf "\n127.0.0.1 www.%s" $VHOST_URL | sudo tee -a "/etc/hosts") ]]; then
 			log "Added $VHOST_URL to the hosts file" "success"
+		fi
+
+		if [[ ! -d "$PROJECT_PATH/logs" ]]; then
+			mkdir -p "$PROJECT_PATH/logs"
+			chmod -R 755 "$PROJECT_PATH/logs/"
 		fi
 
 		log "Restarting apache" "info"
 
-		if [[ $(sudo "$RESTART_SERVICE" >/dev/null 2>&1) ]]; then
+		if [[ -z $(sudo systemctl restart httpd) ]]; then
 			log "Apache service restarted" "success"
 		else
 			log "Unable to restart apache" "warning"
@@ -289,6 +291,12 @@ setup_virtual_host() {
 
 if [[ -z "$PROJECT_PATH" ]] || [[ ! $(readlink -f "$PROJECT_PATH" >/dev/null 2>&1) ]]; then
 	PROJECT_PATH="$PWD/$SL_PROJECT_NAME"
+fi
+
+# Check to make sure the project name is not empty
+if [[ -z "$PROJECT_NAME" ]]; then
+	log "Project name can't be empty" "error"
+	abort
 fi
 
 setup_flags "$@"
