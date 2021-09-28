@@ -1,6 +1,6 @@
 # Create project script
 
-Shell script that helps you when starting a new project by doing repetitive manual task for you
+Shell script that helps you when starting a new project by doing repetitive manual task for you.
 
 # Setup
 
@@ -35,7 +35,7 @@ You can pass all or none of the arguments as they all have predefined default va
 * -e or --editor Is used to set which code editor will be opened once the script has completed
 * -l or -lang or --language Is used to specify in which language the project will be built in so that it can run default setups (such as npm init)
 
-## Config
+# Config
 
 There are a few variables that my not be the same for your setup as it is for mine. Those variables are:
 * `MYSQL_USER`
@@ -43,6 +43,14 @@ There are a few variables that my not be the same for your setup as it is for mi
 * `VIRTUAL_HOST_PATH`
 
 also the script assumes you're using `httpd` for your webserver which may or may not be the case for you. If you're using something else please update that on [line 284]( https://github.com/gigili/create-project/blob/bf14032eb6f4ce5b12484d7045c5d3738c194da9/create-project.sh#L284). Also the setup of the virtual host is done for the apache webserver so if you're using ngnx or something different you might need to update the virtual host [config template](https://github.com/gigili/create-project/blob/bf14032eb6f4ce5b12484d7045c5d3738c194da9/create-project.sh#L236)
+
+## Acknowledment
+
+A big thank you to [Nixcraft](https://www.cyberciti.biz/) for their amazing tutorials on bash scripting 
+
+## Contact
+
+If you have any questions or feedback regarding this project or any other you can reach out to me via [Twitter](https://twitter.com/Gac_BL), [E-mail](github@igorilic.net) or using [other options](https://bio.link/igorilic).
 
 # NOTE:
 
